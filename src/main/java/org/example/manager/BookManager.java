@@ -1,20 +1,31 @@
 package org.example.manager;
 
+import org.example.dao.BookDAO;
 import org.example.model.Book;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class BookManager {
-    private List<Book> books=new ArrayList<Book>();
+    private static BookDAO bookDAO ;
+    public BookManager(BookDAO bookDAO) {
+        BookManager.bookDAO = bookDAO;
+    }
     public void addBook(Book book){
-        books.add(book);
+        bookDAO.addBook(book);
     }
-    public List<Book> getBooks(){
-        return books;
+    public void printAllBooks(){
+        bookDAO.printAllBooks();
     }
-    public Optional<Book> getBook(int id){
-        return books.stream().filter(b->b.getId()==id).findFirst();
+    public List<Book> getBookByTitle(String title){
+       return bookDAO.getBookByTitle(title);
+    }
+    public Book getBookByID(int id){
+      return bookDAO.getBookByID(id);
+    }
+    public void DeleteBookByID(int id){
+        bookDAO.deleteBook(id);
+    }
+    public static void updateBook(Book book){
+        bookDAO.updateBook(book);
     }
 }

@@ -1,32 +1,50 @@
 package org.example.manager;
 
+import org.example.dao.MemberDAO;
+import org.example.model.Member;
+import org.example.model.enums.MemberLevel;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 public class MemberManager {
-    private final double membershipFee;
-    private final int membershipDays;
-    private LocalDate lastRenewalDate;
+    private final MemberDAO memberDAO;
 
-    public MemberManager(double membershipFee, int membershipDays) {
-        this.membershipFee = membershipFee;
-        this.membershipDays = membershipDays;
-        lastRenewalDate = LocalDate.now();
+    public MemberManager() {
+        memberDAO = new MemberDAO();
     }
-    public void renewMember() {
-        lastRenewalDate = LocalDate.now();
+
+    public void renewMember(Member member) {
+        member.setLastRenewalDate(LocalDate.now());
+        memberDAO.updateMember(member);
     }
-    public LocalDate getLastRenewalDate() {
-        return lastRenewalDate;
+
+    public static int getRemainDays(Member member) {
+        return (int)(member.getMembershipDays()-ChronoUnit.DAYS.between(member.getLastRenewalDate(), LocalDate.now()));
     }
-    public double getMembershipFee() {
-        return membershipFee;
+
+    public static boolean hasMembership(Member member){
+        return getRemainDays(member)>0;
     }
-    public int getMembershipDays() {
-        return membershipDays;
+
+    public void addMember (String name, String password, MemberLevel level) {
+    if(isValidUsername(name)) {
+        if(memberDAO.getAllUserNames().stream().noneMatch(x -> x.equals(name))) {
+            Member member=new Member(name,password,level,LocalDate.now());
+            memberDAO.addMember(member);
+            System.out.println("you signedUp successfully");
+        }
+        else System.out.println("Member already exists");
     }
-    public int getRemainDays() {
-        return (int)(membershipDays-ChronoUnit.DAYS.between(lastRenewalDate, LocalDate.now()));
+    else System.out.println("Invalid username-or-password");
     }
-    public boolean hasMembership(){return getRemainDays()>0;}
+
+    public Member theMemberLoggedIn(String username, String password){
+        return memberDAO.getMember(username,password);
+    }
+
+    public static boolean isValidUsername(String username) {
+    return username != null && username.matches("^[a-zA-Z0-9_]{3,20}$");
+    }
+
 }

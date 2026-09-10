@@ -13,8 +13,9 @@ public class Book {
     private final LocalDate publishedDate;
     private double price;
     private BookSituation situation;
-    private final int id;
-    public Book(String title, String author, String publisher, String genre, String description, LocalDate publishedDate, double price,int id) {
+    private int id;
+
+    public Book(String title, String author, String publisher, String genre, String description, LocalDate publishedDate, double price, BookSituation situation) {
             this.title = title;
             this.author = author;
             this.publisher = publisher;
@@ -22,8 +23,7 @@ public class Book {
             this.description = description;
             this.publishedDate = publishedDate;
             this.price = price;
-            this.situation= BookSituation.FREE;
-            this.id = id;
+            this.situation= situation;
         }
         public String getTitle() {
           return title;
@@ -55,7 +55,12 @@ public class Book {
         public void setPrice(double price) {
         this.price = price;
         }
+
         public int getId() {
         return id;
+        }
+
+        public void setId(int id) {
+        this.id=id;
         }
     }
