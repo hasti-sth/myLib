@@ -1,7 +1,6 @@
 package org.example.model;
 
 import org.example.model.enums.MemberLevel;
-import org.example.manager.MemberManager;
 
 import java.time.LocalDate;
 

@@ -3,130 +3,192 @@ package org.example.dao;
 import org.example.database.DatabaseConnection;
 import org.example.model.Member;
 import org.example.model.enums.MemberLevel;
-import org.example.util.PasswordUtil;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
-public class MemberDAO {
+    @Repository
+    public class MemberDAO {
 
-    public void addMember(Member member) {
-        String sql= """
+        public void addMember(Member member) {
+
+            String sql = """
                 INSERT INTO Members
-                (name,password,memberLevel,lastRenewalDate)
-                VALUES(?,?,?,?)
+                (name, password, memberLevel, lastRenewalDate)
+                VALUES (?, ?, ?, ?)
                 RETURNING id
                 """;
-        try(
-                Connection conn= DatabaseConnection.getConnection();
-                PreparedStatement statement=conn.prepareStatement(sql);
-        ){
-            statement.setString(1, member.getName());
-            statement.setString(2,member.getPassword());
-            statement.setString(3,member.getLevel().name());
-            statement.setDate(4,java.sql.Date.valueOf(member.getLastRenewalDate()));
 
-            ResultSet rs=statement.executeQuery();
-            if(rs.next()) member.setId(rs.getInt("id"));
+            try (
+                    Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement statement = conn.prepareStatement(sql)
+            ) {
 
-        }
-        catch(Exception e){
-            System.out.println(e);
-        }
-    }
+                statement.setString(1, member.getName());
+                statement.setString(2, member.getPassword());
+                statement.setString(3, member.getLevel().name());
+                statement.setDate(
+                        4,
+                        java.sql.Date.valueOf(member.getLastRenewalDate())
+                );
 
-    public void updateMember(Member member) {
-        String sql= """
-                UPDATE Members
-                SET memberLevel=?,lastRenewalDate=?
-                WHERE id=?;
-        """;
+                ResultSet rs = statement.executeQuery();
 
-        try(
-                Connection conn= DatabaseConnection.getConnection();
-                PreparedStatement statement=conn.prepareStatement(sql);
-        ){
-            statement.setString(1,member.getLevel().name());
-            statement.setDate(2,java.sql.Date.valueOf(member.getLastRenewalDate()));
-            statement.setInt(3,member.getId());
+                if (rs.next()) {
+                    member.setId(rs.getInt("id"));
+                }
 
-            statement.executeUpdate();
-        }
-        catch(Exception e){
-            System.out.println(e);
-        }
-    }
-
-    public void deleteMember(Member member) {
-        String sql= """
-                DELETE FROM Members
-                WHERE id=?;
-        """;
-
-        try(
-                Connection conn= DatabaseConnection.getConnection();
-                PreparedStatement statement=conn.prepareStatement(sql);
-        ){
-            statement.setInt(1,member.getId());
-
-            statement.executeUpdate();
-        }
-        catch(Exception e){
-            System.out.println(e);
-        }
-    }
-
-    public List<String> getAllUserNames() {
-        List<String> list = new ArrayList<>();
-        String sql="""
-                SELECT name FROM Members
-        """;
-
-        try(
-                Connection conn= DatabaseConnection.getConnection();
-                PreparedStatement statement=conn.prepareStatement(sql);
-        ){
-            ResultSet rs=statement.executeQuery();
-            while(rs.next()){
-                list.add(rs.getString("name"));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-        catch(Exception e){
-            System.out.println(e);
+
+
+        public Member getMemberById(int id) {
+
+            String sql = """
+                SELECT *
+                FROM Members
+                WHERE id = ?
+                """;
+
+            try (
+                    Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement statement = conn.prepareStatement(sql)
+            ) {
+
+                statement.setInt(1, id);
+
+                ResultSet rs = statement.executeQuery();
+
+                if (rs.next()) {
+                    return mapResultSetToMember(rs);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
         }
-        return list;
-    }
 
-    public Member getMember(String username,String password){
-        Member member=null;
-        String sql="""
-                SELECT*FROM Members
-                WHERE name=?;
-        """;
-        try(
-                Connection conn= DatabaseConnection.getConnection();
-                PreparedStatement statement=conn.prepareStatement(sql);
-        ){
-            statement.setString(1,username);
 
-            ResultSet rs=statement.executeQuery();
-            if(rs.next()){
-            String pass=rs.getString("password");
-            //if(PasswordUtil.checkPassword(password,pass)){
+        public Member getMemberByUsername(String username) {
 
-            LocalDate date=rs.getDate("lastRenewalDate").toLocalDate();
-            MemberLevel level=MemberLevel.valueOf(rs.getString("memberLevel"));
+            String sql = """
+                SELECT *
+                FROM Members
+                WHERE name = ?
+                """;
 
-            member=new Member(username,password,level,date);
-        }}        catch(Exception e){
-            System.out.println(e);
+            try (
+                    Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement statement = conn.prepareStatement(sql)
+            ) {
+
+                statement.setString(1, username);
+
+                ResultSet rs = statement.executeQuery();
+
+                if (rs.next()) {
+                    return mapResultSetToMember(rs);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
         }
-        return member;
-    }
+
+
+        public boolean updateMember(Member member) {
+
+            String sql = """
+                UPDATE Members
+                SET name = ?,
+                    memberLevel = ?,
+                    lastRenewalDate = ?
+                WHERE id = ?
+                """;
+
+            try (
+                    Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement statement = conn.prepareStatement(sql)
+            ) {
+
+                statement.setString(1, member.getName());
+                statement.setString(2, member.getLevel().name());
+                statement.setDate(
+                        3,
+                        java.sql.Date.valueOf(member.getLastRenewalDate())
+                );
+                statement.setInt(4, member.getId());
+
+                return statement.executeUpdate() > 0;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return false;
+        }
+
+
+        public boolean deleteMember(int id) {
+
+            String sql = """
+                DELETE FROM Members
+                WHERE id = ?
+                """;
+
+            try (
+                    Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement statement = conn.prepareStatement(sql)
+            ) {
+
+                statement.setInt(1, id);
+
+                return statement.executeUpdate() > 0;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return false;
+        }
+
+
+        private Member mapResultSetToMember(ResultSet rs) throws Exception {
+
+            int id = rs.getInt("id");
+
+            String name = rs.getString("name");
+            String password = rs.getString("password");
+
+            MemberLevel level =
+                    MemberLevel.valueOf(
+                            rs.getString("memberLevel")
+                    );
+
+            LocalDate lastRenewalDate =
+                    rs.getDate("lastRenewalDate").toLocalDate();
+
+            Member member =
+                    new Member(
+                            name,
+                            password,
+                            level,
+                            lastRenewalDate
+                    );
+
+            member.setId(id);
+
+            return member;
+        }
     }
 
 
